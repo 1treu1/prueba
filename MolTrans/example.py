@@ -98,7 +98,7 @@ def test(data_generator, model):
     outputs = np.asarray([1 if i else 0 for i in (np.asarray(y_pred) >= 0.5)])
     return roc_auc_score(y_label, y_pred), average_precision_score(y_label, y_pred), f1_score(y_label, outputs), y_pred, loss.item()
 
-
+FILE = "model.pth"
 def main(fold_n, lr):
     config = BIN_config_DBPE()
     
@@ -167,6 +167,8 @@ def main(fold_n, lr):
             
             if (i % 100 == 0):
                 print('Training at Epoch ' + str(epo + 1) + ' iteration ' + str(i) + ' with loss ' + str(loss.cpu().detach().numpy()))
+                torch.save(model.state_dict(), FILE)
+
             
         # every epoch test
         with torch.set_grad_enabled(False):
