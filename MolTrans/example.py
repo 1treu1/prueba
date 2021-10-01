@@ -20,13 +20,21 @@ from config import BIN_config_DBPE
 from models import BIN_Interaction_Flat
 from stream import BIN_Data_Encoder
 ##################################
-ResultAUPRC = [] 
-ResultAUCROC = []
+trainAUPRC = [] 
+trainAUCROC = []
 ResultLoss = []
+validAUPRC = [] 
+validAUCROC = []
+testAUPRC = [] 
+testAUCROC = []
 
 def texto():
-    np.savetxt("AUPRC.txt",ResultAUPRC)
-    np.savetxt("AUCROC.txt",ResultAUCROC)
+    np.savetxt("trainAUPRC.txt",trainAUPRC)
+    np.savetxt("trainAUCROC.txt",trainAUCROC)
+    np.savetxt("testAUPRC.txt",testAUPRC)
+    np.savetxt("testAUCROC.txt",testAUCROC)
+    np.savetxt("validAUPRC.txt",validAUPRC)
+    np.savetxt("validAUCROC.txt",validAUCROC)
     np.savetxt("Loss.txt",ResultLoss)
     #Result = np.loadtxt("") 
 
@@ -147,6 +155,7 @@ def main(fold_n, lr):
     print('--- Go for Training ---')
     torch.backends.cudnn.benchmark = True
     for epo in range(train_epoch):
+        torch.save(model.state_dict(), FILE)
         model.train()
         for i, (d, p, d_mask, p_mask, label) in enumerate(training_generator):
             score = model(d.long().cuda(), p.long().cuda(), d_mask.long().cuda(), p_mask.long().cuda())
@@ -167,7 +176,8 @@ def main(fold_n, lr):
             
             if (i % 100 == 0):
                 print('Training at Epoch ' + str(epo + 1) + ' iteration ' + str(i) + ' with loss ' + str(loss.cpu().detach().numpy()))
-                torch.save(model.state_dict(), FILE)
+                trainAUCROC.append(auc)
+                trainAUPRC.append(auprc)
 
             
         # every epoch test
@@ -178,6 +188,8 @@ def main(fold_n, lr):
                 max_auc = auc
             
             print('Validation at Epoch '+ str(epo + 1) + ' , AUROC: '+ str(auc) + ' , AUPRC: ' + str(auprc) + ' , F1: '+str(f1))
+            validAUCROC.append(auc)
+            validAUPRC.append(auprc)
     
     print('--- Go for Testing ---')
     try:
@@ -186,8 +198,8 @@ def main(fold_n, lr):
             print('Testing AUROC: ' + str(auc) + ' , AUPRC: ' + str(auprc) + ' , F1: '+str(f1) + ' , Test loss: '+str(loss))
             print("Guardando en la lista")
             ######################################
-            ResultAUCROC.append(auc)
-            ResultAUPRC.append(auprc)
+            testAUCROC.append(auc)
+            testAUPRC.append(auprc)
     except:
         print('testing failed')
     return model_max, loss_history
