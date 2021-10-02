@@ -207,10 +207,10 @@ def main(fold_n, lr):
 #biosnap interaction times 1e-6, flat, batch size 64, len 205, channel 3, epoch 50
 s = time()
 model_max, loss_history = main(1, 5e-6)
+texto()
 e = time()
 print(e-s)
 lh = list(filter(lambda x: x < 1, loss_history))
 plt.plot(lh)
 plt.savefig("Ejemplo1.jpg")##Grafica
 ##Guardando en un .txt
-texto()
