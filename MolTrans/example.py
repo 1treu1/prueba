@@ -155,7 +155,7 @@ def main(fold_n, lr):
     print('--- Go for Training ---')
     torch.backends.cudnn.benchmark = True
     for epo in range(train_epoch):
-        torch.save(model.state_dict(), FILE)
+        
         model.train()
         for i, (d, p, d_mask, p_mask, label) in enumerate(training_generator):
             score = model(d.long().cuda(), p.long().cuda(), d_mask.long().cuda(), p_mask.long().cuda())
@@ -199,6 +199,7 @@ def main(fold_n, lr):
             ######################################
             testAUCROC.append(auc)
             testAUPRC.append(auprc)
+            torch.save(model.state_dict(), FILE)
     except:
         print('testing failed')
     return model_max, loss_history
