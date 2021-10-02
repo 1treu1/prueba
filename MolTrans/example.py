@@ -176,8 +176,7 @@ def main(fold_n, lr):
             
             if (i % 100 == 0):
                 print('Training at Epoch ' + str(epo + 1) + ' iteration ' + str(i) + ' with loss ' + str(loss.cpu().detach().numpy()))
-                trainAUCROC.append(auc)
-                trainAUPRC.append(auprc)
+                
 
             
         # every epoch test
