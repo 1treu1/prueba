@@ -22,7 +22,7 @@ from stream import BIN_Data_Encoder
 ##################################
 trainAUPRC = [] 
 trainAUCROC = []
-ResultLoss = []
+
 validAUPRC = [] 
 validAUCROC = []
 testAUPRC = [] 
@@ -30,16 +30,16 @@ testAUCROC = []
 def texto1():
     np.savetxt("validAUPRC.txt",validAUPRC)
     np.savetxt("validAUCROC.txt",validAUCROC)
-    np.savetxt("Loss.txt",ResultLoss)
+    
     #Result = np.loadtxt("") 
 def texto2():
     np.savetxt("testAUPRC.txt",testAUPRC)
     np.savetxt("testAUCROC.txt",testAUCROC)
-    np.savetxt("Loss.txt",ResultLoss)
+    
 def texto3():
     np.savetxt("testAUPRC.txt",testAUPRC)
     np.savetxt("testAUCROC.txt",testAUCROC)
-    np.savetxt("Loss.txt",ResultLoss)
+    
     np.savetxt("validAUPRC.txt",validAUPRC)
     np.savetxt("validAUCROC.txt",validAUCROC)
 
@@ -174,7 +174,6 @@ def main(fold_n, lr):
             
             loss = loss_fct(n, label)
             loss_history.append(loss)
-            ResultLoss.append(loss_history) ################
             
             opt.zero_grad()
             loss.backward()
