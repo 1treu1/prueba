@@ -27,16 +27,22 @@ validAUPRC = []
 validAUCROC = []
 testAUPRC = [] 
 testAUCROC = []
-
-def texto():
-    np.savetxt("trainAUPRC.txt",trainAUPRC)
-    np.savetxt("trainAUCROC.txt",trainAUCROC)
-    np.savetxt("testAUPRC.txt",testAUPRC)
-    np.savetxt("testAUCROC.txt",testAUCROC)
+def texto1():
     np.savetxt("validAUPRC.txt",validAUPRC)
     np.savetxt("validAUCROC.txt",validAUCROC)
     np.savetxt("Loss.txt",ResultLoss)
     #Result = np.loadtxt("") 
+def texto2():
+    np.savetxt("testAUPRC.txt",testAUPRC)
+    np.savetxt("testAUCROC.txt",testAUCROC)
+    np.savetxt("Loss.txt",ResultLoss)
+def texto3():
+    np.savetxt("testAUPRC.txt",testAUPRC)
+    np.savetxt("testAUCROC.txt",testAUCROC)
+    np.savetxt("Loss.txt",ResultLoss)
+    np.savetxt("validAUPRC.txt",validAUPRC)
+    np.savetxt("validAUCROC.txt",validAUCROC)
+
 
 ########################################
 
@@ -189,6 +195,7 @@ def main(fold_n, lr):
             print('Validation at Epoch '+ str(epo + 1) + ' , AUROC: '+ str(auc) + ' , AUPRC: ' + str(auprc) + ' , F1: '+str(f1))
             validAUCROC.append(auc)
             validAUPRC.append(auprc)
+            texto1()
     
     print('--- Go for Testing ---')
     try:
@@ -199,9 +206,11 @@ def main(fold_n, lr):
             ######################################
             testAUCROC.append(auc)
             testAUPRC.append(auprc)
+            texto2()
             torch.save(model.state_dict(), FILE)
     except:
         print('testing failed')
+        texto3()
     return model_max, loss_history
 ######TRES##########
     # fold 1
