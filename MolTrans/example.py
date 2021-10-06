@@ -140,7 +140,7 @@ def main(fold_n, lr):
               'num_workers': 6, 
               'drop_last': True}
 
-    dataFolder = './dataset/BindingDB'
+    dataFolder = './dataset/DAVIS'
     df_train = pd.read_csv(dataFolder + '/train.csv')
     df_val = pd.read_csv(dataFolder + '/val.csv')
     df_test = pd.read_csv(dataFolder + '/test.csv')
