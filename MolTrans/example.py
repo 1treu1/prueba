@@ -5,6 +5,8 @@ import torch.nn.functional as F
 from torch.utils import data
 from torch import nn 
 import copy
+import os
+import sys
 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -20,29 +22,26 @@ from config import BIN_config_DBPE
 from models import BIN_Interaction_Flat
 from stream import BIN_Data_Encoder
 ##################################
-trainAUPRC = [] 
-trainAUCROC = []
 
-validAUPRC = [] 
-validAUCROC = []
-testAUPRC = [] 
-testAUCROC = []
+
+validloss = [] 
+testloss = []
+Prediccion = []
+Bin = []
+logit1 = []
 def texto1():
-    np.savetxt("validAUPRC.txt",validAUPRC)
-    np.savetxt("validAUCROC.txt",validAUCROC)
+    np.savetxt("validloss.txt",validloss)
     
     #Result = np.loadtxt("") 
 def texto2():
-    np.savetxt("testAUPRC.txt",testAUPRC)
-    np.savetxt("testAUCROC.txt",testAUCROC)
+    np.savetxt("testloss.txt",testloss)
+    np.savetxt("Pre.txt",Prediccion)
+    np.savetxt("Bin.txt",Bin)
+    np.savetxt("logit.txt",logit1)
     
 def texto3():
-    np.savetxt("testAUPRC.txt",testAUPRC)
-    np.savetxt("testAUCROC.txt",testAUCROC)
-    
-    np.savetxt("validAUPRC.txt",validAUPRC)
-    np.savetxt("validAUCROC.txt",validAUCROC)
-
+    np.savetxt("testloss.txt",testloss)
+    np.savetxt("validloss.txt",validloss)
 
 ########################################
 
@@ -56,11 +55,13 @@ def test(data_generator, model):
     loss_accumulate = 0.0
     count = 0.0
     for i, (d, p, d_mask, p_mask, label) in enumerate(data_generator):
+        #print('d', d)
         score = model(d.long().cuda(), p.long().cuda(), d_mask.long().cuda(), p_mask.long().cuda())
         
-        m = torch.nn.Sigmoid()
-        logits = torch.squeeze(m(score))
-        loss_fct = torch.nn.BCELoss()            
+        #m = torch.nn.Sigmoid()
+        #logits = torch.squeeze(m(score))
+        logits = torch.squeeze((score))
+        loss_fct = torch.nn.MSELoss()            
         
         label = Variable(torch.from_numpy(np.array(label)).float()).cuda()
 
@@ -70,49 +71,54 @@ def test(data_generator, model):
         count += 1
         
         logits = logits.detach().cpu().numpy()
+        #print(logits)
+        
         
         label_ids = label.to('cpu').numpy()
         y_label = y_label + label_ids.flatten().tolist()
         y_pred = y_pred + logits.flatten().tolist()
-        
+        logit1.append(logits)
+        print("count", count)
+        print("y_label", label_ids.flatten().tolist() )
+        print("y_predi", logits.flatten().tolist())
     loss = loss_accumulate/count
     
-    fpr, tpr, thresholds = roc_curve(y_label, y_pred)
+    #fpr, tpr, thresholds = roc_curve(y_label, y_pred)
 
-    precision = tpr / (tpr + fpr)
+    #precision = tpr / (tpr + fpr)
 
-    f1 = 2 * precision * tpr / (tpr + precision + 0.00001)
+    #f1 = 2 * precision * tpr / (tpr + precision + 0.00001)
 
-    thred_optim = thresholds[5:][np.argmax(f1[5:])]
+    #thred_optim = thresholds[5:][np.argmax(f1[5:])]
 
-    print("optimal threshold: " + str(thred_optim))
+    #print("optimal threshold: " + str(thred_optim))
 
-    y_pred_s = [1 if i else 0 for i in (y_pred >= thred_optim)]
+    #y_pred_s = [1 if i else 0 for i in (y_pred >= thred_optim)]
 
-    auc_k = auc(fpr, tpr)
-    print("AUROC:" + str(auc_k))
-    print("AUPRC: "+ str(average_precision_score(y_label, y_pred)))
+    #auc_k = auc(fpr, tpr)
+    #print("AUROC:" + str(auc_k))
+    #print("AUPRC: "+ str(average_precision_score(y_label, y_pred)))
 
-    cm1 = confusion_matrix(y_label, y_pred_s)
-    print('Confusion Matrix : \n', cm1)
-    print('Recall : ', recall_score(y_label, y_pred_s))
-    print('Precision : ', precision_score(y_label, y_pred_s))
+    #cm1 = confusion_matrix(y_label, y_pred_s)
+    #print('Confusion Matrix : \n', cm1)
+    #print('Recall : ', recall_score(y_label, y_pred_s))
+    #print('Precision : ', precision_score(y_label, y_pred_s))
 
-    total1=sum(sum(cm1))
+    #total1=sum(sum(cm1))
     #####from confusion matrix calculate accuracy
-    accuracy1=(cm1[0,0]+cm1[1,1])/total1
-    print ('Accuracy : ', accuracy1)
+    #accuracy1=(cm1[0,0]+cm1[1,1])/total1
+    #print ('Accuracy : ', accuracy1)
 
-    sensitivity1 = cm1[0,0]/(cm1[0,0]+cm1[0,1])
-    print('Sensitivity : ', sensitivity1 )
+    #sensitivity1 = cm1[0,0]/(cm1[0,0]+cm1[0,1])
+    #print('Sensitivity : ', sensitivity1 )
 
-    specificity1 = cm1[1,1]/(cm1[1,0]+cm1[1,1])
-    print('Specificity : ', specificity1)
+    #specificity1 = cm1[1,1]/(cm1[1,0]+cm1[1,1])
+    #print('Specificity : ', specificity1)
 
     outputs = np.asarray([1 if i else 0 for i in (np.asarray(y_pred) >= 0.5)])
-    return roc_auc_score(y_label, y_pred), average_precision_score(y_label, y_pred), f1_score(y_label, outputs), y_pred, loss.item()
+    return logits, y_pred, loss.item() #roc_auc_score(y_label, y_pred), average_precision_score(y_label, y_pred), f1_score(y_label, outputs), y_pred, loss.item()
 
-FILE = "model.pth"
+FILE = "model.pt"
 def main(fold_n, lr):
     config = BIN_config_DBPE()
     
@@ -121,9 +127,13 @@ def main(fold_n, lr):
     train_epoch = 100
     
     loss_history = []
+    Pre = []
+    Binario = []
     
     model = BIN_Interaction_Flat(**config)
-    
+    print("Cargando el modelo")
+    model.load_state_dict(torch.load(FILE))
+    print("Modelo cargado")
     model = model.cuda()
 
     if torch.cuda.device_count() > 1:
@@ -136,11 +146,11 @@ def main(fold_n, lr):
     print('--- Data Preparation ---')
     
     params = {'batch_size': BATCH_SIZE,
-              'shuffle': True,
+              'shuffle': False,
               'num_workers': 6, 
               'drop_last': True}
 
-    dataFolder = './dataset/DAVIS'
+    dataFolder = './dataset/prueba'
     df_train = pd.read_csv(dataFolder + '/train.csv')
     df_val = pd.read_csv(dataFolder + '/val.csv')
     df_test = pd.read_csv(dataFolder + '/test.csv')
@@ -153,6 +163,7 @@ def main(fold_n, lr):
     
     testing_set = BIN_Data_Encoder(df_test.index.values, df_test.Label.values, df_test)
     testing_generator = data.DataLoader(testing_set, **params)
+    print(testing_generator)
     
     # early stopping
     max_auc = 0
@@ -160,6 +171,7 @@ def main(fold_n, lr):
     
     print('--- Go for Training ---')
     torch.backends.cudnn.benchmark = True
+    """
     for epo in range(train_epoch):
         
         model.train()
@@ -168,9 +180,10 @@ def main(fold_n, lr):
 
             label = Variable(torch.from_numpy(np.array(label)).float()).cuda()
             
-            loss_fct = torch.nn.BCELoss()
-            m = torch.nn.Sigmoid()
-            n = torch.squeeze(m(score))
+            loss_fct = torch.nn.MSELoss()
+            #m = torch.nn.Sigmoid()
+            #n = torch.squeeze(m(score))
+            n = torch.squeeze(score)
             
             loss = loss_fct(n, label)
             loss_history.append(loss)
@@ -186,29 +199,36 @@ def main(fold_n, lr):
             
         # every epoch test
         with torch.set_grad_enabled(False):
-            auc, auprc, f1, logits, loss = test(validation_generator, model)
-            if auc > max_auc:
-                model_max = copy.deepcopy(model)
-                max_auc = auc
+            #auc, auprc, f1, logits, loss = test(validation_generator, model)
+            loss = test(validation_generator, model)
+            #if auc > max_auc:
+             #   model_max = copy.deepcopy(model)
+              #  max_auc = auc
             
-            print('Validation at Epoch '+ str(epo + 1) + ' , AUROC: '+ str(auc) + ' , AUPRC: ' + str(auprc) + ' , F1: '+str(f1))
-            validAUCROC.append(auc)
-            validAUPRC.append(auprc)
+            print('Validation at Epoch '+ str(epo + 1) +  ' , Test loss: '+ str(loss))
+            validloss.append(loss)
             texto1()
-    
+    """
     print('--- Go for Testing ---')
     try:
         with torch.set_grad_enabled(False):
-            auc, auprc, f1, logits, loss = test(testing_generator, model_max)
-            print('Testing AUROC: ' + str(auc) + ' , AUPRC: ' + str(auprc) + ' , F1: '+str(f1) + ' , Test loss: '+str(loss))
+            #auc, auprc, f1, logits, loss = test(testing_generator, model_max)
+            Binario, Pre, loss = test(testing_generator, model_max)
+            #print('Testing AUROC: ' + str(auc) + ' , AUPRC: ' + str(auprc) + ' , F1: '+str(f1) + ' , Test loss: '+str(loss))
+            print( ' Test loss: '+str(loss))
             print("Guardando en la lista")
             ######################################
-            testAUCROC.append(auc)
-            testAUPRC.append(auprc)
+            Prediccion.append(Pre)
+            testloss.append(loss)
+            Bin.append(Binario)
             texto2()
-            torch.save(model.state_dict(), FILE)
-    except:
-        print('testing failed')
+            #torch.save(model.state_dict(), FILE)
+    except Exception as e:
+        #print('testing failed')
+        print('testing failed: {}'.format(e))
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
         texto3()
     return model_max, loss_history
 ######TRES##########
@@ -217,7 +237,7 @@ def main(fold_n, lr):
 s = time()
 model_max, loss_history = main(1, 5e-6)
 e = time()
-print(e-s)
+#print(e-s)
 lh = list(filter(lambda x: x < 1, loss_history))
 plt.plot(lh)
 plt.savefig("Ejemplo1.jpg")##Grafica
